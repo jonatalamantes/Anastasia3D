@@ -783,7 +783,8 @@ THREE.MMDLoader.prototype.createMesh = function ( model, texturePath, onProgress
 		for ( var i = 0; i < model.metadata.morphCount; i++ ) {
 
 			var m = model.morphs[ i ];
-			var params = { name: m.name };
+
+			var params = { name: m.name, englishName: m.englishName };
 
 			var attribute = new THREE.Float32BufferAttribute( model.metadata.vertexCount * 3, 3 );
 
@@ -985,6 +986,8 @@ THREE.MMDLoader.prototype.createMesh = function ( model, texturePath, onProgress
 
 		for ( var i = 0; i < model.metadata.materialCount; i++ ) {
 
+			//console.log(model.materials[i]);
+
 			var m = model.materials[ i ];
 			var params = {};
 
@@ -994,6 +997,7 @@ THREE.MMDLoader.prototype.createMesh = function ( model, texturePath, onProgress
 			offset += m.faceCount;
 
 			params.name = m.name;
+			params.englishName = m.englishName;
 
 			/*
 			 * Color
@@ -1117,6 +1121,7 @@ THREE.MMDLoader.prototype.createMesh = function ( model, texturePath, onProgress
 			geometry.addGroup( p.faceOffset * 3, p.faceNum * 3, i );
 
 			if ( p.name !== undefined ) m.name = p.name;
+			if ( p.englishName !== undefined ) m.englishName = p.englishName;
 
 			m.skinning = geometry.bones.length > 0 ? true : false;
 			m.morphTargets = geometry.morphTargets.length > 0 ? true : false;

@@ -16,7 +16,7 @@ var clock               = new THREE.Clock();
 var clockParpadeo       = new THREE.Clock();
 var clockParpadeoActual = new THREE.Clock();
 
-var parpadear         = false;
+var parpadear         = true;
 var ascenderParpado   = false;
 var animacionParpadeo = true;
 var anastasiaMesh     = undefined;
@@ -179,7 +179,7 @@ function init()
 
 		var gui = new dat.GUI();
 
-		var dictionary = anastasiaMesh.morphTargetDictionary;
+		var dictionary = anastasiaMesh.geometry.morphTargets;
 
 		var controls = {};
 		var keys = [];
@@ -297,11 +297,11 @@ function makePhongMaterials ( materials ) {
 
 	for ( var i = 0, il = materials.length; i < il; i ++ ) {
 
-		if (materials[i]["name"].indexOf("Lentes") >= 0 || 
-			materials[i]["name"].indexOf("Ojos")   >= 0 ||
-			materials[i]["name"].indexOf("Rostro") >= 0 ||
-			materials[i]["name"].indexOf("Cuerpo") >= 0 ||
-			materials[i]["name"].indexOf("Cuello") >= 0 )
+		if (materials[i]["englishName"].indexOf("glas") >= 0  || 
+			materials[i]["englishName"].indexOf("eye")  >= 0  ||
+			materials[i]["englishName"].indexOf("face") >= 0  ||
+			materials[i]["englishName"].indexOf("neck") >= 0  ||
+			materials[i]["englishName"].indexOf("body") >= 0 )
 		{
 			var m = new THREE.MeshToonMaterial();
 		}
@@ -345,7 +345,7 @@ function onKeyDown(evento)
 	{
 		camera.position.x = 0;
 		camera.position.z = 8;
-		camera.position.y = 9;
+		camera.position.y = 8;
 
 		h = anastasiaMesh.position.x;
 		k = anastasiaMesh.position.z;
@@ -511,8 +511,16 @@ function render()
 			{
 				clockParpadeoActual.getDelta();
 				tiempoParpadeoActual = parseInt(clockParpadeoActual.elapsedTime);
+				posParpadear = -1;
 
-				posParpadear = anastasiaMesh.morphTargetDictionary["ParpadeoFeliz"];
+				for (i = 0; i < anastasiaMesh.geometry.morphTargets.length; i++)
+				{					
+					if (anastasiaMesh.geometry.morphTargets[i].englishName == "HappyCloseEyes")
+					{
+						posParpadear = i;
+						break;
+					}
+				}
 
 				if (ascenderParpado)
 				{
