@@ -49,9 +49,9 @@ function init()
 
 	//
 
-	renderer = new THREE.WebGLRenderer( { antialias: true } );
+	renderer = new THREE.WebGLRenderer( { antialias: true, } );
 	renderer.setPixelRatio( window.devicePixelRatio );
-	renderer.setSize( window.innerWidth, window.innerHeight );
+	renderer.setSize( window.innerWidth, window.innerHeight - $("#dialogo").height()*2 );
 	renderer.setClearColor( new THREE.Color( 0xffffff ) );
 	container.appendChild( renderer.domElement );
 
@@ -73,9 +73,13 @@ function init()
 	};
 
 	var modelAnastasia = 'models/Anastasia/Anastasia.pmx';
-    var modelCuarto    = 'models/Cuarto/Cuarto.pmx';
+    //var modelCuarto    = 'models/Tropical/tropical_resort.pmx';
+    //var modelCuarto    = 'models/Cathedral/Cathedral/unused_cathedral.pmx';
+    //var modelCuarto    = 'models/Cathedral/Cloudy/cloudy_horizon.pmx';	
+    //var modelCuarto    = 'models/Pretty/pretty.pmx';	
+    var modelCuarto    = 'models/Forest/stage.pmd';	
     
-	var vpdFiles = [
+	/*var vpdFiles = [
 		'models/vpds/01.vpd',
 		'models/vpds/02.vpd',
 		'models/vpds/03.vpd',
@@ -87,7 +91,7 @@ function init()
 		'models/vpds/09.vpd',
 		'models/vpds/10.vpd',
 		'models/vpds/11.vpd'
-	];
+	];*/
 
 	helper = new THREE.MMDHelper();
 
@@ -116,7 +120,7 @@ function init()
 
 		helper.unifyAnimationDuration( { afterglow: 2.0 } );
 
-		var vpdIndex = 0;
+		/*var vpdIndex = 0;
 		function loadVpd () {
 
 			var vpdFile = vpdFiles[ vpdIndex ];
@@ -141,7 +145,16 @@ function init()
 			}, onProgress, onError );
 
 		}
-		loadVpd();
+		loadVpd();*/
+
+		makePhongMaterials( anastasiaMesh.material.materials );
+		anastasiaMesh.material = phongMaterials;
+		helper.doIk = true;
+		effect.enabled = false;
+		helper.enablePhysics(true);
+		physicsHelper.visible = false;
+		ready = true;
+		onWindowResize();
 
 	}, onProgress, onError );
 
@@ -175,7 +188,7 @@ function init()
 	window.addEventListener( 'resize', onWindowResize, false );
 	document.addEventListener( 'keydown', onKeyDown, this );
 
-	function initGui () {
+	/*function initGui () {
 
 		var gui = new dat.GUI();
 
@@ -288,7 +301,7 @@ function init()
 		effect.enabled = false;
 		helper.enablePhysics(true);
 		physicsHelper.visible = false;
-	}
+	}*/
 }
 
 function makePhongMaterials ( materials ) {
@@ -469,7 +482,7 @@ function onWindowResize()
 	camera.aspect = window.innerWidth / window.innerHeight;
 	camera.updateProjectionMatrix();
 
-	effect.setSize( window.innerWidth, window.innerHeight );
+	effect.setSize( window.innerWidth, window.innerHeight - $("#dialogo").height()*2);
 }
 
 function onDocumentMouseMove( event ) 
