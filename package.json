@@ -1,0 +1,30 @@
+{
+  "name": "anastasia3d",
+  "version": "1.0.0",
+  "description": "Anastasia is a 3D model from MMD",
+  "main": "server.js",
+  "dependencies": {
+    "body-parser": "^1.17.1",
+    "ejs": "^2.5.6",
+    "express": "^4.15.2",
+    "mongoose": "^4.9.6"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jonatalamantes/Anastasia3D.git"
+  },
+  "keywords": [
+    "MMD"
+  ],
+  "author": "Jesxtra",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/jonatalamantes/Anastasia3D/issues"
+  },
+  "homepage": "https://github.com/jonatalamantes/Anastasia3D#readme"
+}
