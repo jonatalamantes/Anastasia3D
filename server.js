@@ -6,6 +6,7 @@ var url        = require('url');
 var mongoose   = require('mongoose');
 var Schema     = mongoose.Schema;
 var bodyParser = require('body-parser');
+var wav        = require('node-wav');
 
 //Configuration Section
 var app = module.exports = express();
@@ -22,6 +23,13 @@ app.use(bodyParser.urlencoded({
 
 //Server Section
 app.get('/', function(req, res) {
+
+    /*var buffer = fs.readFileSync('voicebank/example.wav');
+    var result = wav.decode(buffer);
+
+    console.log(result.sampleRate);
+    console.log(result.channelData);*/
+
     res.render('index', {
         title: "Anastasia",
         header: "Anastasia"
