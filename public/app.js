@@ -32,9 +32,9 @@ function init()
 	document.body.appendChild( container );
 
 	camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 2000 );
-	camera.position.z = 28;
+	camera.position.z = 35;
 	camera.position.x = 1;
-	camera.position.y = 1;
+	camera.position.y = 3;
 
 	// scene
 
@@ -51,7 +51,8 @@ function init()
 
 	renderer = new THREE.WebGLRenderer( { antialias: true, } );
 	renderer.setPixelRatio( window.devicePixelRatio );
-	renderer.setSize( window.innerWidth, window.innerHeight - $("#dialogo").height()*2 );
+	//renderer.setSize( window.innerWidth, window.innerHeight - $("#dialogo").height()*2 );
+	renderer.setSize( window.innerWidth, window.innerHeight );
 	renderer.setClearColor( new THREE.Color( 0xffffff ) );
 	container.appendChild( renderer.domElement );
 
@@ -302,6 +303,26 @@ function init()
 		helper.enablePhysics(true);
 		physicsHelper.visible = false;
 	}*/
+
+	var loader = new THREE.FontLoader();
+
+    loader.load( 'models/Fonts/droid_sans_bold.typeface.json', function ( font ) {
+
+        var textGeo = new THREE.TextGeometry( 'Anastasia 3D', {
+            font: font,
+            size: 2,
+            height: 1,
+            bevelEnabled: false
+        });
+
+        var textMaterial = new THREE.MeshPhongMaterial( { color: 0xff0000 } );
+
+        textMesh = new THREE.Mesh( textGeo, textMaterial );
+
+        textMesh.position.x = -8;
+        textMesh.position.y = 13;
+     	scene.add( textMesh );
+    }); 
 }
 
 function makePhongMaterials ( materials ) {
@@ -338,9 +359,9 @@ function onKeyDown(evento)
     
     if (evento.keyCode == 109) // -
 	{
-		camera.position.z = 28;
+		camera.position.z = 35;
 		camera.position.x = 1;
-		camera.position.y = 1;
+		camera.position.y = 3;
 
 		h = anastasiaMesh.position.x;
 		k = anastasiaMesh.position.z;
@@ -371,6 +392,10 @@ function onKeyDown(evento)
 		camera.position.x = Math.sin(anguloCamara*0.0174533) * (radio - h);
 		camera.position.z = Math.cos(anguloCamara*0.0174533) * (radio - k);
 		camera.rotation.y = anguloCamara * 0.0174533;		
+	}
+	else if (evento.keyCode == 80) //P de Parpadear
+	{
+		animacionParpadeo = !animacionParpadeo;
 	}
 	else if (evento.keyCode == 39)  // "ArrowRight"
 	{	
