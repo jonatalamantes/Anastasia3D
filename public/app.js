@@ -22,6 +22,7 @@ var animacionParpadeo = true;
 var anastasiaMesh     = undefined;
 
 var anguloCamara = 0;
+var zoom         = 1;
 
 init();
 animate();
@@ -331,10 +332,13 @@ function makePhongMaterials ( materials ) {
 
 	for ( var i = 0, il = materials.length; i < il; i ++ ) {
 
+		console.log(materials[i]["englishName"]);
+
 		if (materials[i]["englishName"].indexOf("glas") >= 0  || 
 			materials[i]["englishName"].indexOf("eye")  >= 0  ||
 			materials[i]["englishName"].indexOf("face") >= 0  ||
             materials[i]["englishName"].indexOf("neck") >= 0  ||
+            materials[i]["englishName"].indexOf("ribb") >= 0  ||
 			materials[i]["englishName"].indexOf("body") >= 0 )
 		{
 			var m = new THREE.MeshToonMaterial();
@@ -357,29 +361,29 @@ function onKeyDown(evento)
 {
     console.log(evento);
     
-    if (evento.keyCode == 109) // -
+	if (evento.keyCode == 107) // +
 	{
-		camera.position.z = 35;
-		camera.position.x = 1;
-		camera.position.y = 3;
+		zoom++;
+		zoom = zoom % 3 + 1;
 
-		h = anastasiaMesh.position.x;
-		k = anastasiaMesh.position.z;
-
-		x = camera.position.x;
-		z = camera.position.z;
-
-		radio = Math.sqrt(Math.pow(x-h,2)+Math.pow(z-k,2));
-
-		camera.position.x = Math.sin(anguloCamara*0.0174533) * (radio - h);
-		camera.position.z = Math.cos(anguloCamara*0.0174533) * (radio - k);
-		camera.rotation.y = anguloCamara * 0.0174533;		
-	}
-	else if (evento.keyCode == 107) // +
-	{
-		camera.position.x = 0;
-		camera.position.z = 8;
-		camera.position.y = 8;
+		if (zoom == 1)
+		{
+			camera.position.x = 0;
+			camera.position.z = 8;
+			camera.position.y = 8;
+		}
+		else if (zoom == 2)
+		{
+			camera.position.z = 27;
+			camera.position.x = 1;
+			camera.position.y = 0;
+		}
+		else
+		{
+			camera.position.z = 35;
+			camera.position.x = 1;
+			camera.position.y = 3;
+		}
 
 		h = anastasiaMesh.position.x;
 		k = anastasiaMesh.position.z;
