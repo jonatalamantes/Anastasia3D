@@ -1,11 +1,14 @@
-var fs  = require('fs')
+ var fs  = require('fs')
 
 function validateVoiceBank(voiceBuffer)
 {   
-    fonemas = [];
-    clases  = [];
+    fonemas   = [];
+    clases    = [];
+    infClases = [];
+    key       = "";
+
     data = voiceBuffer;
-    console.log(data.toString().split("pitch").length)
+    //console.log(data.toString().split("pitch").length)
 
     //Desechamos los primeros ocho bytes
     data = data.slice(8);
@@ -93,161 +96,102 @@ function validateVoiceBank(voiceBuffer)
         data = data.slice(4);
     }
 
-    /*
-    if (data.slice(0, 6).equals(new Buffer("Vowels")))
+    len1 = data.readInt8(0);
+    data = data.slice(4);    
+
+    len2 = data.readInt8(0);
+
+    for (k = 0; k < len1; k++)
     {
-        data = data.slice(6);
-        tam  = data.readInt8(0);
+    	var char1 = cleanString(data.slice(0, 32).toString('utf-8'));
+    	var begin = data.readInt8(32);
+		var inf = data.slice(48, 100); //len2
 
-        data = data.slice(9);
-
-        for (var i = 0; i < tam; i++)
-        {
-            text = cleanString(data.slice(0,10).toString());
-            data = data.slice(10);
-            clases.push({class: "Vowels", val: text});
-        }
+		infClases.push({"fonema": char1, "tipo": begin, "info": inf});
+    	data = data.slice(100);
     }
 
-    data = data.slice(3);
+    //Read the Long Key
+    key = cleanString(data.slice(0, 32).toString('utf-8'));
+    data = data.slice(32);
+    data = data.slice(228);
 
-    if (data.slice(0, 6).equals(new Buffer("Nasals")))
+    var1 = data.readInt8(0);
+    data = data.slice(12);
+
+    //Read the DBVI
+    if (data.slice(0,4).equals(new Buffer("DBV ")))
     {
-        data = data.slice(6);
-        tam  = data.readInt8(0);
-
+        console.log("Procesando DBV ");
         data = data.slice(8);
-
-        for (var i = 0; i < tam; i++)
-        {
-            text = cleanString(data.slice(0,10).toString());
-            data = data.slice(10);
-            clases.push({class: "Nasals", val: text});
-        }
+    }
+    else
+    {
+        return -1;
     }
 
-    data = data.slice(6);
+    var2 = data.readInt8(0);
+    data = data.slice(8);
 
-    if (data.slice(0, 14).equals(new Buffer("VoicedPlosives")))
-    {
-        data = data.slice(14);
-        tam  = data.readInt8(0);
+    var3 = data.readInt8(0);
+    data = data.slice(12);
 
-        data = data.slice(9);
-
-        for (var i = 0; i < tam; i++)
-        {
-            text = cleanString(data.slice(0,9).toString());
-            data = data.slice(9);
-            clases.push({class: "VoicedPlosives", val: text});
-        }
-    }
-
-    data = data.slice(6);
-
-    if (data.slice(0, 16).equals(new Buffer("VoicedFricatives")))
-    {
-        data = data.slice(16);
-        tam  = data.readInt8(0);
-
-        data = data.slice(9);
-
-        for (var i = 0; i < tam; i++)
-        {
-            text = cleanString(data.slice(0,9).toString());
-            data = data.slice(9);
-            clases.push({class: "VoicedFricatives", val: text});
-        }
-    }
-
-    data = data.slice(4);
-
-    if (data.slice(0, 16).equals(new Buffer("VoicedAffricates")))
-    {
-        data = data.slice(16);
-        tam  = data.readInt8(0);
-
-        data = data.slice(9);
-
-        for (var i = 0; i < tam; i++)
-        {
-            text = cleanString(data.slice(0,9).toString());
-            data = data.slice(9);
-            clases.push({class: "VoicedAffricates", val: text});
-        }
-    }
-
-    data = data.slice(5);
-
-    if (data.slice(0, 7).equals(new Buffer("Liquids")))
-    {
-        data = data.slice(7);
-        tam  = data.readInt8(0);
-
-        data = data.slice(9);
-
-        for (var i = 0; i < tam; i++)
-        {
-            text = cleanString(data.slice(0,9).toString());
-            data = data.slice(9);
-            clases.push({class: "Liquids", val: text});
-        }
-    }
-
-    data = data.slice(4);
-
-    if (data.slice(0, 10).equals(new Buffer("Semivowels")))
-    {
-        data = data.slice(10);
-        tam  = data.readInt8(0);
-
-        data = data.slice(9);
-
-        for (var i = 0; i < tam; i++)
-        {
-            text = cleanString(data.slice(0,9).toString());
-            data = data.slice(9);
-            clases.push({class: "Semivowels", val: text});
-        }
-    }
-
-    data = data.slice(3);
-
-    if (data.slice(0, 9).equals(new Buffer("Syllables")))
-    {
-        data = data.slice(9);
-        tam  = data.readInt8(0);
-
-        data = data.slice(9);
-
-        for (var i = 0; i < tam; i++)
-        {
-            text = cleanString(data.slice(0,10).toString());
-            data = data.slice(10);
-            clases.push({class: "Syllables", val: text});
-        }
-    }
-
-    data = data.slice(3);
-
-    if (data.slice(0, 9).equals(new Buffer("UnvoicedPlosives")))
-    {
-        data = data.slice(9);
-        tam  = data.readInt8(0);
-
-        data = data.slice(9);
-
-        for (var i = 0; i < tam; i++)
-        {
-            text = cleanString(data.slice(0,10).toString());
-            data = data.slice(10);
-            clases.push({class: "UnvoicedPlosives", val: text});
-        }
-    }*/
+    console.log(var1);
+    console.log(var2);
 
     //console.log(fonemas);
-    console.log(clases);
+    //console.log(clases);
+    //console.log(infClases);
+    //console.log(key);
+    //
+
+    console.log("Data");
     console.log(data);
+
+    chuncks = data.slice(0, 8000);
+
+    posRais = [];
+    raised = false;
+    temp = "";
+    contador = 0;
+    lastPos = 0;
+    for (j = 0; j < chuncks.length; j++)
+    {
+    	if (data[j].toString() !== "0")
+    	{
+    		if (raised)
+    		{
+    			contador++;
+    			temp += " " + data[j];
+    			continue;
+    		}
+    		else
+    		{
+    			contador++;
+    			raised = true;
+    			temp += " " + data[j];
+    		}
+    	}	
+    	else
+    	{
+    		if (raised)
+    		{
+    			posRais.push({"pos": j - contador, "len": j - contador - lastPos, "val": temp});
+
+    			lastPos = j - contador;
+    			contador = 0;
+    			temp = "";
+    			raised = false;
+    		}
+    	}
+    }
+
+    console.log(posRais);
+
+    //console.log(data);
+
+    //data = data.slice(x2);
+
 
 }
 
@@ -270,7 +214,7 @@ function cleanString(string)
 fs.readFile("Megpoid_V4_Sweet.ddi", function(error, data){
 	if (error) throw err;
 
-    console.log(validateVoiceBank(data));
+    validateVoiceBank(data);
 
 	
     /*for (i = 0; i < data.length; i++)
