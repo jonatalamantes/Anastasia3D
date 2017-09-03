@@ -8,7 +8,7 @@ function validateVoiceBank(voiceBuffer)
     key       = "";
 
     data = voiceBuffer;
-    //console.log(data.toString().split("pitch").length)
+    console.log(data.toString().split("EpR").length)
 
     //Desechamos los primeros ocho bytes
     data = data.slice(8);
@@ -136,19 +136,332 @@ function validateVoiceBank(voiceBuffer)
     var3 = data.readInt8(0);
     data = data.slice(12);
 
-    console.log(var1);
-    console.log(var2);
+    console.log("DBV" + " " + var1 + " " + var2 + " " + var3);
+
+    //Exploramos la primera parte que es la ARR
+    continua = true;
+    arrC   = 0;
+    artC   = 0;
+    artuC  = 0;
+    artpC  = 0;
+
+    actualArr  = null;
+    actualArt  = null;
+    actualArtu = null;
+    actualArtp = null;
+
+    while (continua)
+    {
+    	que = whois(data);
+
+    	//console.log(data);
+    	//console.log(que);
+
+	    if (que == "ARR")
+	    {
+	    	arrC++;
+	    	data = readARR(data);
+	    }
+	    else if (que == "ARTu")
+	    {
+	    	artuC++;
+	    	data = readARTu(data);
+	    }
+	    else if (que == "ARTp")
+	    {
+	    	artpC++;
+	    	data = readARTp(data);
+	    }
+	    else if (que == "ART")
+	    {
+	    	artC++;
+	    	data = readART(data);
+	    }
+	    else
+	    {
+	    	continua = false;
+	    }
+
+	    //console.log("ARR:" + arrC + " ART:" + artC + " ARTu:" + artuC + " ARTp:" + artpC)
+    }
+
+	/*
+
+	console.log("ARR");	
+    console.log(arr);
+    console.log(arr1);
+    console.log(arr2);
+
+    console.log("ART_");
+    console.log(art_);
+    console.log(art_1);
+    console.log(art_2);
+    console.log(art_3);
+
+    console.log("ARTu");
+    console.log(artu);
+    console.log(artu1);
+    console.log(artu2);
+    console.log(artu3);
+    console.log(artu4);
+
 
     //console.log(fonemas);
     //console.log(clases);
     //console.log(infClases);
     //console.log(key);
-    //
+    //*/
+
+    return "";
 
     console.log("Data");
     console.log(data);
 
-    chuncks = data.slice(0, 8000);
+}
+
+function whois(dataR)
+{
+	data = dataR;
+
+	data = dataR;		
+	actual = data.readInt8(0);
+
+    while (actual == 0)
+    {
+    	data = data.slice(1);	
+    	actual = data.readInt8(0);
+    }		
+
+    return cleanString(data.slice(0,8).toString("utf-8"));
+}
+
+function readARR(dataR)
+{
+	data = dataR;
+    arr = data.slice(0,8).toString("utf-8");
+    data = data.slice(8);
+
+    arr1 = data.readInt8(0);
+    data = data.slice(8);
+
+    arr2 = data.readInt8(0);
+    data = data.slice(8);
+
+    actualArr = {"v1": arr1, "v2": arr2}
+
+    return data;
+}
+
+function readART(dataR)
+{
+	data = dataR;		
+	actual = data.readInt8(0);
+
+    while (actual == 0)
+    {
+    	data = data.slice(1);	
+    	actual = data.readInt8(0);
+    }		
+
+    console.log(data);
+	//console.log(data.slice(0,8).toString("utf-8") + ": " + m + " de " + arr2);
+
+    //Ahora con el primer ART_
+    art_ = data.slice(0,8).toString("utf-8");
+    data = data.slice(8);
+
+    art_1 = data.readInt8(0);
+    data = data.slice(8);
+
+    art_2 = data.readInt8(0);
+    data = data.slice(4);
+
+    art_3 = data.readInt8(0);
+    data = data.slice(8);
+
+    //console.log("{" + art_ + " " + art_1 + " " + art_2 + " " + art_3 + "}");
+
+    actualArt = {"v1": art_1, "v2": art_2, "v3": art_3}
+    return data;
+}
+
+function readARTu(dataR)
+{
+	data = dataR;	
+	actual = data.readInt8(0);
+
+	while (actual == 0)
+    {
+    	data = data.slice(1);	
+    	actual = data.readInt8(0);
+    }		
+
+	//console.log(data.slice(0, 16).toString("utf-8") + ": " + k + " de " + art_3);
+
+    //Ahora con el ARTu
+    artu = data.slice(0, 16).toString("utf-8");
+    data = data.slice(16);
+
+    artu1 = data.readInt8(0);
+    data  = data.slice(12);
+
+    artu2 = data.slice(0, 8).toString("hex");
+    data  = data.slice(8);
+
+    artu3 = data.readInt8();
+    data  = data.slice(4);
+
+    artu4 = data.readInt8();
+    data  = data.slice(8);
+
+    actualArtu = {"v1": artu1, "v2": artu2, "v3": artu3, "v4": artu4}
+
+    //console.log("[" + artu + " " + artu1 + " " + artu2 + " " + artu3 + " " + artu4 + "]");
+
+    return data;
+}
+
+function readARTp(dataR)
+{
+	data = dataR;
+    actual = data.readInt8(0);
+
+    while (actual == 0)
+    {
+    	data = data.slice(1);	
+    	actual = data.readInt8(0);
+    }		
+
+	//console.log(data.slice(0, 12).toString("utf-8") + ": " + j + " de " + artu3);
+
+    //Ahora con el ARTp
+    artp = [];
+
+    artp.push(data.slice(0, 12).toString("utf-8"));
+    data = data.slice(12);
+
+    artp.push(data.readInt8(0));
+    data  = data.slice(4);
+
+    artp.push(data.slice(0, 8));
+    data  = data.slice(8);
+
+    artp.push(data.readInt8(0));
+    data  = data.slice(2);    
+
+    artp.push(data.slice(0, 12));
+    data  = data.slice(12);
+
+    artp.push(data.slice(0, 6));
+    data  = data.slice(6);
+
+    artp.push(data.slice(0, 6));
+    data  = data.slice(6);
+
+    artp.push(data.slice(0, 8));
+    data  = data.slice(8);
+
+    artp.push(data.slice(0,8));
+    data  = data.slice(8);
+
+    artp.push(data.readInt8(0));
+    data  = data.slice(4);
+
+    artp.push(data.slice(0, 11));
+    data  = data.slice(11);
+
+    artp.push(data.slice(0, 8));
+    data  = data.slice(8);
+
+    artp.push(data.readInt8(0));
+    data  = data.slice(4);
+
+    artp.push(data.slice(0, 3));
+    data  = data.slice(3);
+
+    artp.push(data.readInt8(0));
+    iter = data.readInt8(0);
+    data  = data.slice(1);
+
+    data = data.slice(3);
+
+    artp2 = []
+
+    for (i = 0; i < iter; i++)
+    {
+    	artp2.push(data.slice(0, 8));
+		data  = data.slice(8);
+    }
+
+    //artp.push(artp2);
+
+    artp.push(data.slice(0, 4));
+    data  = data.slice(4);
+
+    artp.push(data.readInt8(0));
+    data  = data.slice(3);
+
+    artp.push(data.readInt8(0));
+    data  = data.slice(2);
+
+    artp.push(data.slice(0, 6));
+    data  = data.slice(6);
+
+    artp.push(data.slice(0, 7));
+    data  = data.slice(7);
+
+    data  = data.slice(4);
+
+    artp.push(data.readInt8(0));
+    data  = data.slice(8);
+
+    artp.push(data.readInt8(0));
+    data  = data.slice(8);
+
+    artp.push(data.readInt8(0));
+    data  = data.slice(4);
+
+    artp.push(data.readInt8(0));
+    data  = data.slice(4);
+
+    artp.push(data.readInt8(0));
+    data  = data.slice(4);
+
+    artp.push(data.readInt8(0));
+    data  = data.slice(4);
+
+    artp.push(data.readInt8(0));
+    data  = data.slice(4);
+
+    artp.push(data.readInt8(0));
+    data  = data.slice(4);
+
+    last   = [];
+    actual = data.slice(0,2);
+
+    while (actual.toString("utf-8") !== "AR")
+    {	
+    	last.push(actual)
+		data   = data.slice(2);
+	    actual = data.slice(0,2);
+    }
+
+    artp.push(last);
+
+    actualArtp = artp;
+    //console.log("ARTp");
+    //console.log(artp);
+    //console.log(data);
+    
+    return data;
+}
+
+function logChunk(data, size)
+{
+	console.log("Data");
+    console.log(data);
+
+    chuncks = data.slice(0, size);
 
     posRais = [];
     raised = false;
@@ -162,14 +475,14 @@ function validateVoiceBank(voiceBuffer)
     		if (raised)
     		{
     			contador++;
-    			temp += " " + data[j];
+    			temp += " [" + String.fromCharCode(data[j]) + "/" + data[j] + "/" + chuncks.slice(j, j+1).toString('hex') + "]";
     			continue;
     		}
     		else
     		{
     			contador++;
     			raised = true;
-    			temp += " " + data[j];
+    			temp = "[" + String.fromCharCode(data[j]) + "/" + data[j] + "/" + chuncks.slice(j, j+1).toString('hex') + "]";
     		}
     	}	
     	else
@@ -187,12 +500,6 @@ function validateVoiceBank(voiceBuffer)
     }
 
     console.log(posRais);
-
-    //console.log(data);
-
-    //data = data.slice(x2);
-
-
 }
 
 function cleanString(string)
@@ -211,16 +518,5 @@ function cleanString(string)
     return clean;
 }
 
-fs.readFile("Megpoid_V4_Sweet.ddi", function(error, data){
-	if (error) throw err;
-
-    validateVoiceBank(data);
-
-	
-    /*for (i = 0; i < data.length; i++)
-    {
-        console.log(data.readInt8(i));
-    }*/
-
-	//console.log(data.split("ART").length);
-});
+data = fs.readFileSync("Megpoid_V4_Sweet.ddi");
+validateVoiceBank(data);
