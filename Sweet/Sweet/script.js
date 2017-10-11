@@ -1,293 +1,673 @@
- var fs  = require('fs')
+var fs  = require('fs')
+var mysql = require('mysql')
 
 function validateVoiceBank(voiceBuffer)
 {   
-    fonemas   = [];
-    clases    = [];
-    infClases = [];
-    key       = "";
+    var con = mysql.createConnection({
+        host: "localhost",
+        user: "root",
+        password: "rt3xp@n0",
+        multipleStaments: true,
+        database: "AnastasiaDB"
+    });
 
-    data = voiceBuffer;
-
-    //Desechamos los primeros ocho bytes
-    data = data.slice(8);
-
-    //Revisamos que diga DBSe el siguiente tramo
-    if (data.slice(0,4).equals(new Buffer("DBSe")))
-    {
-        console.log("Procesando DBSe");
-        data = data.slice(8);
-    }
-    else
-    {
-        return -1;
-    }
-
-    if (data.readInt8(0) == 1)
-    {
-        data = data.slice(12);
-    }
-    else
-    {
-        return -2
-    }
-
-    if (data.slice(0,5).equals(new Buffer("PHDCJ")))
-    {
-        console.log("Procesando PHDCJ");
-        data = data.slice(12);
-    }
-
-    tam = data.readInt8(0);
-    data = data.slice(3);
-
-    for (var i = 0;  i < tam; i++)
-    {
-        text = cleanString(data.slice(0,31).toString());
-        data = data.slice(31);
-        fonemas.push(text);
-    }
-
-    //Process the next part
-    if (data.readInt8(0) == 1)
-    {
-        data = data.slice(1);
-    }   
-    else
-    {
-        return -3;
-    }
-
-    if (data.slice(0,4).equals(new Buffer("PHG2")))
-    {
-        console.log("Procesando PHG2");
-        data = data.slice(8);
-    }
-
-    tamClases = data.readInt8(0);
-    data = data.slice(4);
-
-    for (var i = 0; i < tamClases; i++)
-    {
-        classLen = data.readInt8(0);
-        data = data.slice(4);
-
-        className = cleanString(data.slice(0,classLen).toString());
-        data = data.slice(classLen);
-
-        instances = data.readInt8(0);
-        data = data.slice(4);
-
-        for (var j = 0; j < instances; j++)
+    con.connect(function(err) {
+        if (err)
         {
-            id   = data.readInt8(0);
-            data = data.slice(4);
+            throw err;
+        } 
 
-            cantidad = data.readInt8(0);
-            data = data.slice(4);
+        fonemas   = [];
+        clases    = [];
+        infClases = [];
+        key       = "";
 
-            text = data.slice(0, cantidad).toString();
-            data = data.slice(cantidad);
+        data = voiceBuffer;
 
-            clases.push({id: id, class: className, val: text});
+        //Desechamos los primeros ocho bytes
+        data = data.slice(8);
+
+        //Revisamos que diga DBSe el siguiente tramo
+        if (data.slice(0,4).equals(new Buffer("DBSe")))
+        {
+            console.log("Procesando DBSe");
+            data = data.slice(8);
+        }
+        else
+        {
+            return -1;
         }
 
+        if (data.readInt8(0) == 1)
+        {
+            data = data.slice(12);
+        }
+        else
+        {
+            return -2
+        }
+
+        if (data.slice(0,5).equals(new Buffer("PHDCJ")))
+        {
+            console.log("Procesando PHDCJ");
+            data = data.slice(12);
+        }
+
+        tam = data.readInt8(0);
+        data = data.slice(3);
+
+        for (var i = 0;  i < tam; i++)
+        {
+            text = cleanString(data.slice(0,31).toString());
+            data = data.slice(31);
+            fonemas.push(text);
+        }
+
+        //Process the next part
+        if (data.readInt8(0) == 1)
+        {
+            data = data.slice(1);
+        }   
+        else
+        {
+            return -3;
+        }
+
+        if (data.slice(0,4).equals(new Buffer("PHG2")))
+        {
+            console.log("Procesando PHG2");
+            data = data.slice(8);
+        }
+
+        tamClases = data.readInt8(0);
         data = data.slice(4);
-    }
 
-    len1 = data.readInt8(0);
-    data = data.slice(4);    
+        for (var i = 0; i < tamClases; i++)
+        {
+            classLen = data.readInt8(0);
+            data = data.slice(4);
 
-    len2 = data.readInt8(0);
+            className = cleanString(data.slice(0,classLen).toString());
+            data = data.slice(classLen);
 
-    for (k = 0; k < len1; k++)
-    {
-    	var char1 = cleanString(data.slice(0, 32).toString('utf-8'));
-    	var begin = data.readInt8(32);
-		var inf = data.slice(48, 100); //len2
+            instances = data.readInt8(0);
+            data = data.slice(4);
 
-		infClases.push({"fonema": char1, "tipo": begin, "info": inf});
-    	data = data.slice(100);
-    }
+            for (var j = 0; j < instances; j++)
+            {
+                id   = data.readInt8(0);
+                data = data.slice(4);
 
-    //Read the Long Key
-    key = cleanString(data.slice(0, 32).toString('utf-8'));
-    data = data.slice(32);
-    data = data.slice(228);
+                cantidad = data.readInt8(0);
+                data = data.slice(4);
 
-    var1 = data.readInt8(0);
-    data = data.slice(12);
+                text = data.slice(0, cantidad).toString();
+                data = data.slice(cantidad);
 
-    //Read the DBVI
-    if (data.slice(0,4).equals(new Buffer("DBV ")))
-    {
-        console.log("Procesando DBV ");
+                clases.push({id: id, class: className, val: text});
+            }
+
+            data = data.slice(4);
+        }
+
+        len1 = data.readInt8(0);
+        data = data.slice(4);    
+
+        len2 = data.readInt8(0);
+
+        for (k = 0; k < len1; k++)
+        {
+        	var char1 = cleanString(data.slice(0, 32).toString('utf-8'));
+        	var begin = data.readInt8(32);
+    		var inf = data.slice(48, 100); //len2
+
+    		infClases.push({"fonema": char1, "tipo": begin, "info": inf});
+        	data = data.slice(100);
+        }
+
+        //Read the Long Key
+        key = cleanString(data.slice(0, 32).toString('utf-8'));
+        data = data.slice(32);
+        data = data.slice(228);
+
+        var1 = data.readInt8(0);
+        data = data.slice(12);
+
+        //Read the DBVI
+        if (data.slice(0,4).equals(new Buffer("DBV ")))
+        {
+            console.log("Procesando DBV ");
+            data = data.slice(8);
+        }
+        else
+        {
+            return -1;
+        }
+
+        var2 = data.readInt8(0);
         data = data.slice(8);
-    }
-    else
-    {
-        return -1;
-    }
 
-    var2 = data.readInt8(0);
-    data = data.slice(8);
+        var3 = data.readInt8(0);
+        data = data.slice(12);
 
-    var3 = data.readInt8(0);
-    data = data.slice(12);
+        console.log("DBV" + " " + var1 + " " + var2 + " " + var3);
 
-    console.log("DBV" + " " + var1 + " " + var2 + " " + var3);
+        con.query("TRUNCATE TABLE anastasiadb_ARR", function (err, result) {
+            if (err) throw err;
+            console.log("Truncada ARR")
+        });
 
-    //Exploramos la primera parte que es la ARR
-    continua = true;
-    arrC   = 1;
-    artC   = 1;
-    artuC  = 1;
-    artpC  = 1;
-    staC   = 1;
-    stauC  = 1;
-    stapC  = 1;
-    vqmC   = 1;
-    vqmuC  = 1;
-    vqmpC  = 1;
-    tdbC   = 1;
-    tmmC   = 1;
+        con.query("TRUNCATE TABLE anastasiadb_DBV", function (err, result) {
+            if (err) throw err;
+            console.log("Truncada DBV")
+        });
 
-    actualARR  = null;
-    actualART  = null;
-    actualARTu = null;
-    actualARTp = null;
-    actualSTA  = null;
-    actualSTAu = null;
-    actualSTAp = null;
-    actualVQM  = null;
-    actualVQMu = null;
-    actualVQMp = null;
-    actualTDB  = null;
-    actualTMM  = null;
+        con.query("TRUNCATE TABLE anastasiadb_ART", function (err, result) {
+            if (err) throw err;
+            console.log("Truncada ART")
+        });
 
-    console.log("EpR: "  + voiceBuffer.toString().split("EpR").length)
-	console.log("ARR: "  + voiceBuffer.toString().split("ARR").length)
-	console.log("ARTu: " + voiceBuffer.toString().split("ARTu").length)
-	console.log("ARTp: " + voiceBuffer.toString().split("ARTp").length)
-	console.log("ART: "  + voiceBuffer.toString().split("ART ").length)
-	console.log("STA : " + voiceBuffer.toString().split("STA ").length)
-	console.log("STAu: " + voiceBuffer.toString().split("STAu").length)
-	console.log("STAp: " + voiceBuffer.toString().split("STAp").length)
-	console.log("VQM: "  + voiceBuffer.toString().split("VQM").length)
-	console.log("VQMu: " + voiceBuffer.toString().split("VQMu").length)
-	console.log("TMM: "  + voiceBuffer.toString().split("TMM").length)
-	console.log("TDB: "  + voiceBuffer.toString().split("TDB").length)
+        con.query("TRUNCATE TABLE anastasiadb_ARTu", function (err, result) {
+            if (err) throw err;
+            console.log("Truncada ARTu")
+        });
 
-    while (continua)
-    {
-    	que = whois(data);
+        con.query("TRUNCATE TABLE anastasiadb_EpR", function (err, result) {
+            if (err) throw err;
+            console.log("Truncada EpR")
+        });
 
-    	//console.log(data);
-    	//console.log(que);
+        con.query("TRUNCATE TABLE anastasiadb_ARTp", function (err, result) {
+            if (err) throw err;
+            console.log("Truncada ARTp")
+        });
 
-	    if (que == "ARR")
-	    {
-	    	arrC++;
-	    	data = readARR(data);
-	    }
-	    else if (que == "ARTu")
-	    {
-	    	artuC++;
-	    	data = readARTu(data);
-	    }
-	    else if (que == "ARTp")
-	    {
-	    	artpC++;
-	    	data = readARTp(data);
-	    }
-	    else if (que == "ART")
-	    {
-	    	artC++;
-	    	data = readART(data);
-	    }
-	    else if (que == "STA")
-	    {
-	    	staC++;
-	    	data = readSTA(data);
-	    }
-	    else if (que == "STAu")
-	    {
-	    	stauC++;
-	    	data = readSTAu(data);
-	    }
-	    else if (que == "STAp")
-	    {
-	    	stapC++;
-	    	data = readSTAp(data);
-	    }
-	    else if (que == "VQM")
-	    {
-	    	vqmC++;
-	    	data = readVQM(data);
-	    }
-	    else if (que == "VQMu")
-	    {
-	    	vqmuC++;
-	    	data = readVQMu(data);
-	    }
-	    else if (que == "VQMp")
-	    {
-	    	vqmpC++;
-	    	data = readVQMp(data);
-	    }
-	    else if (que == "TDB")
-	    {
-	    	tdbC++;
-	    	data = readTDB(data);
-	    }
-	    else if (que == "TMM")
-	    {
-	    	tmmC++;
-	    	data = readTMM(data);
-	    }
-	    else if (que == "Owari")
-	    {
-	    	"Termine de parsear el archivo :D"
-	    	break;
-	    }
-	    else
-	    {
-	    	console.log("No se que sea: " + que + " en la posicion " + (voiceBuffer.length - data.length).toString(16));
-	    	console.log(data);
-	    	continua = false;
-	    }
+        con.query("TRUNCATE TABLE anastasiadb_STA", function (err, result) {
+            if (err) throw err;
+            console.log("Truncada STA")
+        });
 
-	    //console.log("ARR:" + arrC + " ART:" + artC + " ARTu:" + artuC + " ARTp:" + artpC)
-    }
+        con.query("TRUNCATE TABLE anastasiadb_STAu", function (err, result) {
+            if (err) throw err;
+            console.log("Truncada STAu")
+        });
+
+        con.query("TRUNCATE TABLE anastasiadb_STAp", function (err, result) {
+            if (err) throw err;
+            console.log("Truncada STAp")
+        });
+
+        con.query("TRUNCATE TABLE anastasiadb_VQM", function (err, result) {
+            if (err) throw err;
+            console.log("Truncada VQM")
+        });
+
+        con.query("TRUNCATE TABLE anastasiadb_VQMu", function (err, result) {
+            if (err) throw err;
+            console.log("Truncada VQMu")
+        });
+
+        con.query("TRUNCATE TABLE anastasiadb_VQMp", function (err, result) {
+            if (err) throw err;
+            console.log("Truncada VQMp")
+        });
+
+        con.query("TRUNCATE TABLE anastasiadb_TDB", function (err, result) {
+            if (err) throw err;
+            console.log("Truncada TDB")
+        });
+
+        con.query("TRUNCATE TABLE anastasiadb_TMM", function (err, result) {
+            if (err) throw err;
+            console.log("Truncada TMM")
+        });
+
+        //Exploramos la primera parte que es la ARR
+        continua = true;
+        arrC   = 0;
+        artC   = 0;
+        artuC  = 0;
+        artpC  = 0;
+        staC   = 0;
+        stauC  = 0;
+        stapC  = 0;
+        vqmC   = 0;
+        vqmuC  = 0;
+        vqmpC  = 0;
+        tdbC   = 0;
+        tmmC   = 0;
+
+        actualARR  = null;
+        actualART  = null;
+        actualARTu = null;
+        actualARTp = null;
+        actualSTA  = null;
+        actualSTAu = null;
+        actualSTAp = null;
+        actualVQM  = null;
+        actualVQMu = null;
+        actualVQMp = null;
+        actualTDB  = null;
+        actualTMM  = null;
+
+        console.log("EpR: "  + voiceBuffer.toString().split("EpR").length)
+    	console.log("ARR: "  + voiceBuffer.toString().split("ARR").length)
+    	console.log("ARTu: " + voiceBuffer.toString().split("ARTu").length)
+    	console.log("ARTp: " + voiceBuffer.toString().split("ARTp").length)
+    	console.log("ART: "  + voiceBuffer.toString().split("ART ").length)
+    	console.log("STA : " + voiceBuffer.toString().split("STA ").length)
+    	console.log("STAu: " + voiceBuffer.toString().split("STAu").length)
+    	console.log("STAp: " + voiceBuffer.toString().split("STAp").length)
+    	console.log("VQM: "  + voiceBuffer.toString().split("VQM").length)
+    	console.log("VQMu: " + voiceBuffer.toString().split("VQMu").length)
+    	console.log("TMM: "  + voiceBuffer.toString().split("TMM").length)
+    	console.log("TDB: "  + voiceBuffer.toString().split("TDB").length)
+
+        while (continua)
+        {
+        	que = whois(data);
+
+    	    if (que == "ARR")
+    	    {
+    	    	arrC++;
+    	    	data = readARR(data);
+
+                sql = "INSERT INTO anastasiadb_DBV (posicion, tipo, idRefer) VALUES (?, ?, ?)";
+                con.query(sql, [voiceBuffer.length-data.length, "ARR", arrC], function (err, result) {
+                    if (err) throw "DBV\n" + sql + "\n" + err;
+                });
+
+                sql = "INSERT INTO anastasiadb_ARR (id, v1, v2, v3, v4, v5) VALUES (?, ?, ?, ?, ?, ?)";
+                con.query(sql, [arrC, actualARR.v1, actualARR.v2, actualARR.v3, actualARR.v4, actualARR.v5], function (err, result) {
+                    if (err) throw "ARR\n" + sql + "\n" + err;
+                });
+    	    }
+    	    else if (que == "ARTu")
+    	    {
+                artuC++;
+                data = readARTu(data);
+
+                sql = "INSERT INTO anastasiadb_DBV (posicion, tipo, idRefer) VALUES (?, ?, ?)";
+                con.query(sql, [voiceBuffer.length-data.length, "ARTu", artuC], function (err, result) {
+                    if (err) throw "DBV\n" + sql + "\n" + err;
+                });
+
+                sql = "INSERT INTO anastasiadb_ARTu (id, v1, v2, v3, v4) VALUES (?, ?, ?, ?, ?)";
+                con.query(sql, [artuC, actualARTu.v1, actualARTu.v2, actualARTu.v3, actualARTu.v4], function (err, result) {
+                    if (err) throw "ARTu\n" + sql + "\n" + err;
+                });
+    	    }
+    	    else if (que == "ARTp")
+    	    {
+    	    	artpC++;
+    	    	data = readARTp(data);
+
+                sql = "INSERT INTO anastasiadb_DBV (posicion, tipo, idRefer) VALUES (?, ?, ?)";
+                con.query(sql, [voiceBuffer.length-data.length, "ARTp", artpC], function (err, result) {
+                    if (err) throw "DBV\n" + sql + "\n" + err;
+                });
+
+                var queryParams = [];
+                var queryParams2 = [];
+                var sql1 = "INSERT INTO anastasiadb_ARTp (id, ";
+                var sql2 = "INSERT INTO anastasiadb_EpR (id, ";
+                var sql3 = " VALUES (" + artpC + ", ";
+                var sql4 = " VALUES (" + (stapC + artpC + vqmpC) + ", ";
+
+                for (var x = 0; x < actualARTp.length; x++)
+                {
+                    if (x == 14) //EpR
+                    {
+                        queryParams2.push(actualARTp[x]);
+
+                        temp = "";
+                        for (y = 0; y < actualARTp[x+1].length; y++)
+                        {
+                            temp += actualARTp[x+1][y].toString("hex");
+                        }
+
+                        queryParams2.push(temp);
+                        x++;
+
+                        sql2 += "len, data, ";
+                        sql4 += "?, ?, ";
+
+                        queryParams.push(stapC + artpC + vqmpC);
+                        sql1 += "v" + (x+1) + ", ";
+                        sql3 += "?, ";              
+                    }
+                    else
+                    {
+                        queryParams.push(actualARTp[x]);
+                        
+                        sql1 += "v" + (x+1) + ", ";
+                        sql3 += "?, ";                        
+                    }
+                }
+
+                sql1 = sql1.substring(0, sql1.length-2) + ")";
+                sql2 = sql2.substring(0, sql2.length-2) + ")";
+                sql3 = sql3.substring(0, sql3.length-2) + ")";
+                sql4 = sql4.substring(0, sql4.length-2) + ")";
+
+                sql1 = sql1 + sql3;
+                sql2 = sql2 + sql4;
+
+                con.query(sql2, queryParams2, function (err, result) {
+                    if (err) throw "EpR-ARTp\n" + sql2 + "\n" + err;
+                });
+
+                con.query(sql1, queryParams, function (err, result) {
+                    if (err) throw "ARTp\n" + sql1 + "\n" + err;
+                });
+    	    }
+    	    else if (que == "ART")
+    	    {
+    	    	artC++;
+    	    	data = readART(data);
+
+                sql = "INSERT INTO anastasiadb_DBV (posicion, tipo, idRefer) VALUES (?, ?, ?)";
+                con.query(sql, [voiceBuffer.length-data.length, "ART", artC], function (err, result) {
+                    if (err) throw "DBV\n" + sql + "\n" + err;
+                });
+
+                sql = "INSERT INTO anastasiadb_ART (id, v1, v2, v3, v4, v5, v6) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                con.query(sql, [artC, actualART.v1, actualART.v2, actualART.v3, actualART.v4, actualART.v5, actualART.v6], function (err, result) {
+                    if (err) throw "ART\n" + sql + "\n" + err;
+                });
+    	    }
+    	    else if (que == "STA")
+    	    {
+    	    	staC++;
+    	    	data = readSTA(data);
+
+                sql = "INSERT INTO anastasiadb_DBV (posicion, tipo, idRefer) VALUES (?, ?, ?)";
+                con.query(sql, [voiceBuffer.length-data.length, "STA", staC], function (err, result) {
+                    if (err) throw "DBV\n" + sql + "\n" + err;
+                });
+
+                sql = "INSERT INTO anastasiadb_STA (id, v1, v2) VALUES (?, ?, ?)";
+                con.query(sql, [staC, actualSTA.v1, actualSTA.v2], function (err, result) {
+                    if (err) throw "STA\n" + sql + "\n" + err;
+                });      
+    	    }
+    	    else if (que == "STAu")
+    	    {
+    	    	stauC++;
+    	    	data = readSTAu(data);
+
+                sql = "INSERT INTO anastasiadb_DBV (posicion, tipo, idRefer) VALUES (?, ?, ?)";
+                con.query(sql, [voiceBuffer.length-data.length, "STAu", stauC], function (err, result) {
+                    if (err) throw "DBV\n" + sql + "\n" + err;
+                });
+
+                sql = "INSERT INTO anastasiadb_STAu (id, v1, v2, v3, v4) VALUES (?, ?, ?, ?, ?)";
+                con.query(sql, [stauC, actualSTAu.v1, actualSTAu.v2, actualSTAu.v3, actualSTAu.v4], function (err, result) {
+                    if (err) throw "STAu\n" + sql + "\n" + err;
+                });
+    	    }
+    	    else if (que == "STAp")
+    	    {
+    	    	stapC++;
+    	    	data = readSTAp(data);
+
+                sql = "INSERT INTO anastasiadb_DBV (posicion, tipo, idRefer) VALUES (?, ?, ?)";
+                con.query(sql, [voiceBuffer.length-data.length, "STAp", stapC], function (err, result) {
+                    if (err) throw "DBV\n" + sql + "\n" + err;
+                });
+
+                var queryParams = [];
+                var queryParams2 = [];
+                var sql1 = "INSERT INTO anastasiadb_STAp (id, ";
+                var sql2 = "INSERT INTO anastasiadb_EpR (id, ";
+                var sql3 = " VALUES (" + stapC + ", ";
+                var sql4 = " VALUES (" + (stapC + artpC + vqmpC) + ", ";
+
+                for (var x = 0; x < actualSTAp.length; x++)
+                {
+                    if (x == 14) //EpR
+                    {
+                        queryParams2.push(actualSTAp[x]);
+
+                        temp = "";
+                        for (y = 0; y < actualSTAp[x+1].length; y++)
+                        {
+                            temp += actualSTAp[x+1][y].toString("hex");
+                        }
+
+                        queryParams2.push(temp);
+                        x++;
+
+                        sql2 += "len, data, ";
+                        sql4 += "?, ?, ";
+
+                        queryParams.push(stapC + artpC + vqmpC);
+                        sql1 += "v" + (x+1) + ", ";
+                        sql3 += "?, ";              
+                    }
+                    else
+                    {
+                        queryParams.push(actualSTAp[x]);
+                        
+                        sql1 += "v" + (x+1) + ", ";
+                        sql3 += "?, ";                        
+                    }
+                }
+
+                sql1 = sql1.substring(0, sql1.length-2) + ")";
+                sql2 = sql2.substring(0, sql2.length-2) + ")";
+                sql3 = sql3.substring(0, sql3.length-2) + ")";
+                sql4 = sql4.substring(0, sql4.length-2) + ")";
+
+                sql1 = sql1 + sql3;
+                sql2 = sql2 + sql4;
+
+                con.query(sql2, queryParams2, function (err, result) {
+                    if (err) throw "EpR-STAp\n" + sql2 + "\n" + err;
+                });
+
+                con.query(sql1, queryParams, function (err, result) {
+                    if (err) throw "STAp\n" + sql1 + "\n" + err;
+                });                
+    	    }
+    	    else if (que == "VQM")
+    	    {
+    	    	vqmC++;
+    	    	data = readVQM(data);
+                
+                sql = "INSERT INTO anastasiadb_DBV (posicion, tipo, idRefer) VALUES (?, ?, ?)";
+                con.query(sql, [voiceBuffer.length-data.length, "VQM", vqmC], function (err, result) {
+                    if (err) throw "DBV\n" + sql + "\n" + err;
+                });
+
+                sql = "INSERT INTO anastasiadb_VQM (id, v1, v2, v3, v4, v5) VALUES (?, ?, ?, ?, ?, ?)";
+                con.query(sql, [vqmC, actualVQM.v1, actualVQM.v2, actualVQM.v3, actualVQM.v4, actualVQM.v5], function (err, result) {
+                    if (err) throw "VQM\n" + sql + "\n" + err;
+                });                
+    	    }
+    	    else if (que == "VQMu")
+    	    {
+    	    	vqmuC++;
+    	    	data = readVQMu(data);
+
+                sql = "INSERT INTO anastasiadb_DBV (posicion, tipo, idRefer) VALUES (?, ?, ?)";
+                con.query(sql, [voiceBuffer.length-data.length, "VQMu", vqmuC], function (err, result) {
+                    if (err) throw "DBV\n" + sql + "\n" + err;
+                });
+
+                sql = "INSERT INTO anastasiadb_VQMu (id, v1, v2, v3, v4) VALUES (?, ?, ?, ?, ?)";
+                con.query(sql, [vqmuC, actualVQMu.v1, actualVQMu.v2, actualVQMu.v3, actualVQMu.v4], function (err, result) {
+                    if (err) throw "VQMu\n" + sql + "\n" + err;
+                });
+    	    }
+    	    else if (que == "VQMp")
+    	    {
+    	    	vqmpC++;
+    	    	data = readVQMp(data);
+
+                sql = "INSERT INTO anastasiadb_DBV (posicion, tipo, idRefer) VALUES (?, ?, ?)";
+                con.query(sql, [voiceBuffer.length-data.length, "VQMp", vqmpC], function (err, result) {
+                    if (err) throw "DBV\n" + sql + "\n" + err;
+                });
+
+                var queryParams = [];
+                var queryParams2 = [];
+                var sql1 = "INSERT INTO anastasiadb_VQMp (id, ";
+                var sql2 = "INSERT INTO anastasiadb_EpR (id, ";
+                var sql3 = " VALUES (" + vqmpC + ", ";
+                var sql4 = " VALUES (" + (stapC + artpC + vqmpC) + ", ";
+
+                for (var x = 0; x < actualVQMp.length; x++)
+                {
+                    if (x == 8) //EpR
+                    {
+                        queryParams2.push(actualVQMp[x]);
+
+                        temp = "";
+                        for (y = 0; y < actualVQMp[x+1].length; y++)
+                        {
+                            temp += actualVQMp[x+1][y].toString("hex");
+                        }
+
+                        queryParams2.push(temp);
+                        x++;
+
+                        sql2 += "len, data, ";
+                        sql4 += "?, ?, ";
+
+                        queryParams.push(stapC + artpC + vqmpC);
+                        sql1 += "v" + (x+1) + ", ";
+                        sql3 += "?, ";              
+                    }
+                    else
+                    {
+                        console.log(actualVQMp[x])
+                        queryParams.push(actualVQMp[x]);
+                        
+                        sql1 += "v" + (x+1) + ", ";
+                        sql3 += "?, ";                        
+                    }
+                }
+
+                sql1 = sql1.substring(0, sql1.length-2) + ")";
+                sql2 = sql2.substring(0, sql2.length-2) + ")";
+                sql3 = sql3.substring(0, sql3.length-2) + ")";
+                sql4 = sql4.substring(0, sql4.length-2) + ")";
+
+                sql1 = sql1 + sql3;
+                sql2 = sql2 + sql4;
+
+                con.query(sql2, queryParams2, function (err, result) {
+                    if (err) throw "EpR-VQMp\n" + sql2 + "\n" + err;
+                });
+
+                con.query(sql1, queryParams, function (err, result) {
+                    if (err) throw "VQMp2\n" + sql1 + "\n" + "\n" + err;
+                });                                
+    	    }
+    	    else if (que == "TDB")
+    	    {
+    	    	tdbC++;
+    	    	data = readTDB(data);
+
+                sql = "INSERT INTO anastasiadb_DBV (posicion, tipo, idRefer) VALUES (?, ?, ?)";
+                con.query(sql, [voiceBuffer.length-data.length, "TDB", tdbC], function (err, result) {
+                    if (err) throw "DBV\n" + sql + "\n" + err;
+                });
+
+                sql = "INSERT INTO anastasiadb_TDB (id, v1, v2, v3, v4, v5) VALUES (?, ?, ?, ?, ?, ?)";
+                con.query(sql, [tdbC, actualTDB.v1, actualTDB.v2, actualTDB.v3, actualTDB.v4, actualTDB.v5], function (err, result) {
+                    if (err) throw "TDB\n" + sql + "\n" + err;
+                });                                
+    	    }
+    	    else if (que == "TMM")
+    	    {
+    	    	tmmC++;
+    	    	data = readTMM(data);
+
+                sql = "INSERT INTO anastasiadb_DBV (posicion, tipo, idRefer) VALUES (?, ?, ?)";
+                con.query(sql, [voiceBuffer.length-data.length, "TMM", tmmC], function (err, result) {
+                    if (err) throw "DBV\n" + sql + "\n" + err;
+                });
+
+                sql = "INSERT INTO anastasiadb_TMM (id, v1, v2, v3) VALUES (?, ?, ?, ?)";
+                con.query(sql, [tmmC, actualTMM.v1, actualTMM.v2, actualTMM.v3], function (err, result) {
+                    if (err) throw "TMM\n" + sql + "\n" + err;
+                });                                
+    	    }
+    	    else if (que == "Owari")
+    	    {
+    	    	"Termine de parsear el archivo :D"
+    	    	break;
+    	    }
+    	    else
+    	    {
+    	    	console.log("No se que sea: " + que + " en la posicion " + (voiceBuffer.length - data.length).toString(16));
+    	    	console.log(data);
+    	    	continua = false;
+    	    }
+
+    	    //console.log("ARR:" + arrC + " ART:" + artC + " ARTu:" + artuC + " ARTp:" + artpC)
+        }
 
 
-    console.log("Esperados: ");
-    console.log("EpR: "  + voiceBuffer.toString().split("EpR").length)
-	console.log("ARR: "  + voiceBuffer.toString().split("ARR ").length)
-	console.log("ARTu: " + voiceBuffer.toString().split("ARTu").length)
-	console.log("ARTp: " + voiceBuffer.toString().split("ARTp").length)
-	console.log("ART: "  + voiceBuffer.toString().split("ART ").length)
-	console.log("STA : " + voiceBuffer.toString().split("STA ").length)
-	console.log("STAu: " + voiceBuffer.toString().split("STAu").length)
-	console.log("STAp: " + voiceBuffer.toString().split("STAp").length)
-	console.log("VQM: "  + voiceBuffer.toString().split("VQM ").length)
-	console.log("VQMu: " + voiceBuffer.toString().split("VQMu").length)
-	console.log("TDB: "  + voiceBuffer.toString().split("TDB ").length)
-	console.log("TMM: "  + voiceBuffer.toString().split("TMM ").length)
+        console.log("Esperados: ");
+        console.log("EpR: "  + voiceBuffer.toString().split("EpR").length)
+    	console.log("ARR: "  + voiceBuffer.toString().split("ARR ").length)
+    	console.log("ARTu: " + voiceBuffer.toString().split("ARTu").length)
+    	console.log("ARTp: " + voiceBuffer.toString().split("ARTp").length)
+    	console.log("ART: "  + voiceBuffer.toString().split("ART ").length)
+    	console.log("STA : " + voiceBuffer.toString().split("STA ").length)
+    	console.log("STAu: " + voiceBuffer.toString().split("STAu").length)
+    	console.log("STAp: " + voiceBuffer.toString().split("STAp").length)
+    	console.log("VQM: "  + voiceBuffer.toString().split("VQM ").length)
+    	console.log("VQMu: " + voiceBuffer.toString().split("VQMu").length)
+    	console.log("TDB: "  + voiceBuffer.toString().split("TDB ").length)
+    	console.log("TMM: "  + voiceBuffer.toString().split("TMM ").length)
 
-	console.log("\nEncontrados: ");
-    console.log("ARR: " + arrC);
-    console.log("ART: " + artC);
-    console.log("ARTu: " + artuC);
-    console.log("ARTp: " + artpC);
-    console.log("STA: " + staC);
-    console.log("STAu: " + stauC);
-    console.log("STAp: " + stapC);
-	console.log("VQM: " + vqmC);
-    console.log("VQMu: " + vqmuC);
-    console.log("VQMp: " + vqmpC);
-    console.log("TDB: " + tdbC);
-    console.log("TMM: " + tmmC);
+    	console.log("\nEncontrados: ");
+        console.log("ARR: " + arrC);
+        console.log("ART: " + artC);
+        console.log("ARTu: " + artuC);
+        console.log("ARTp: " + artpC);
+        console.log("STA: " + staC);
+        console.log("STAu: " + stauC);
+        console.log("STAp: " + stapC);
+    	console.log("VQM: " + vqmC);
+        console.log("VQMu: " + vqmuC);
+        console.log("VQMp: " + vqmpC);
+        console.log("TDB: " + tdbC);
+        console.log("TMM: " + tmmC);
+
+        var sql = "SELECT 1";
+
+        con.query(sql, function (err2, result) {
+            if (err2) throw err2;
+
+            //PHDCJ
+            /*for (var i = 0; i < clases.length; i++)
+            {
+                sql = "INSERT INTO anastasiadb_PHDCJ (id, type, value) VALUES (?, ?, ?)";
+                con.query(sql, [clases[i].id+1, clases[i].class, clases[i].val], function (err, result) {
+                    if (err) throw err;
+                });
+            }*/
+
+            //PHG2
+            /*for (var i = 0; i < infClases.length; i++)
+            {
+                sql = "INSERT INTO anastasiadb_PHG2 (value, info) VALUES (?, ?)";
+                console.log(infClases[i])
+                con.query(sql, [infClases[i].fonema, infClases[i].info], function (err, result) {
+                    if (err) throw err;
+                });
+            }*/
+
+            con.end(function(){
+                console.log("end");
+            })
+        });
+    });    
 }
 
 function whois(dataR)
@@ -374,7 +754,6 @@ function readARR(dataR)
     }
 
     actualARR = {"v1": arr1, "v2": arr2, "v3": arr3, "v4": arr4, "v5": arr5.trim()}
-
     console.log(actualARR)
 
     return data;
@@ -488,9 +867,6 @@ function readTDB(dataR)
     }
 
     actualTDB = {"v1": tdb1, "v2": tdb2, "v3": tdb3, "v4": tdb4, "v5": tdb5.trim()}
-
-
-    console.log(actualTDB)
 
     return data;
 }
@@ -800,7 +1176,7 @@ function readVQMp(dataR)
     vqmp.push(data.slice(0, 8));
     data  = data.slice(8);
     
-    actualVqmp = vqmp;
+    actualVQMp = vqmp;
 
     return data;
 }
